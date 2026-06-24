@@ -1,4 +1,17 @@
 \documentclass{beamer}
+\hypersetup{colorlinks=true, urlcolor=blue}
+\usepackage{listings}
+\lstdefinestyle{demo}{
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{black!5},
+    frame=single,
+    breaklines=true,
+    columns=fullflexible,
+    keepspaces=true,
+}
+% Inline code: verbatim argument, so underscores/braces/etc. need no escaping.
+% Requires the enclosing frame to be [fragile].
+\NewDocumentCommand{\code}{v}{\texttt{#1}}
 %Information to be included in the title page:
 \title{A Gentle Introduction to Python for Research Computing}
 \author{Ben Keene}
@@ -10,8 +23,530 @@
 \frame{\titlepage}
 
 \begin{frame}
-\frametitle{Sample frame title}
-This is some text in the first frame. This is some text in the first frame. This is some text in the first frame.
+    \frametitle{License \& Attribution}
+    \begin{center}
+        This material is adapted from \textbf{The Carpentries}\\
+        (Software Carpentry, Data Carpentry, Library Carpentry).
+
+        \bigskip
+
+        Licensed under \textbf{Creative Commons Attribution 4.0 International}\\
+        (\href{https://creativecommons.org/licenses/by/4.0/}{CC BY 4.0}).
+
+        \bigskip
+
+        You are free to \emph{share} and \emph{adapt} this material for any purpose,\\
+        provided you give appropriate credit.
+
+        \bigskip
+
+        \small \url{https://carpentries.org/}
+    \end{center}
 \end{frame}
+
+\begin{frame}
+    \frametitle{Overview}
+    In this beginner-friendly session, we will cover the core Python concepts for research workflows, including data handling, basic analysis, and scripting.
+\end{frame}
+
+\begin{frame}
+    \frametitle{Why Python for Research?}
+    \begin{itemize}
+        \item High-level language, easy to learn
+        \item Large ecosystem of scientific libraries
+        \item Strong community support
+        \item Great for automation and reproducibility
+    \end{itemize}
+
+    \bigskip
+
+    However, Python can be slow for certain tasks, better to use C or Fortran for scientific computing.
+
+    \bigskip
+
+    In ML/Deep Learning, Python libraries like PyTorch and TensorFlow leverage C++/CUDA for performance-critical operations.
+\end{frame}
+\begin{frame}
+    \frametitle{Characterizing Research Workflows}
+    \begin{itemize}
+        \item Data generation/collection
+        \item Data processing and analysis
+        \item Visualization and reporting
+    \end{itemize}
+\end{frame}
+
+
+
+\begin{frame}
+    \frametitle{Data Generation \& Collection}
+    \textbf{Data Generation}: Simulations, experiments, synthetic data used for training machine learning models.
+
+    \textbf{Data Collection}: Gathering data from various sources, manually downloading datasets, using APIs, or scraping data from the web.
+
+    \begin{itemize}
+        \item Tabular data: CSV, Excel, SQL databases
+        \item Image data: JPEG, PNG, TIFF
+        \item Text data: JSON, XML, plain text
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Data Processing \& Analysis}
+    \textbf{Data Processing}: Cleaning, transforming, and preparing data for analysis.
+
+    \textbf{Data Analysis}: Probably your specific research needs.
+
+    \begin{itemize}
+        \item Training ML models and evaluating their performance.
+        \item Simulating various combinations of chemical reactions.
+        \item Evaluating the effectiveness of different approaches to a research question.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Visualization \& Reporting}
+    \textbf{Visualization}: Creating plots, charts, and other visual representations of data.
+
+    \begin{itemize}
+        \item Matplotlib, Seaborn, Plotly for plotting
+        \item Jupyter Notebooks for interactive data analysis
+    \end{itemize}
+
+    \textbf{Reporting}: Saving the output of your analysis in a format that can be distributed.
+    Key for reproducibility and sharing results.
+
+    \begin{itemize}
+        \item Text files for documentation, logging, saving configurations.
+        \item Auto-generate a \LaTeX{} document for publication-quality output.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Getting Started}
+    Navigate to the following URL to get started: \url{https://bit.ly/rcijupyter}.
+
+    \bigskip
+
+    Your username is the first letter of your first name, and your full last name.
+
+    $$\text{John Doe} \mapsto \text{jdoe}$$
+    $$\text{Ima Knight} \mapsto \text{iknight}$$
+
+    \bigskip
+
+    \begin{alertblock}{\centering Remember your password!}
+        Your password will be set to whatever you enter in the password field.
+        Make sure to remember it for future use.
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Our Scenario: A Miracle Arthritis Cure?}
+    Dr. Maverick claims a new drug cures arthritis inflammation
+    flare-ups within \textbf{3 weeks} of a patient's first flare-up.
+
+    \bigskip
+
+    After months of asking, we finally have the clinical trial data:
+    a single CSV spreadsheet.
+
+    \bigskip
+
+    \textbf{Our job} is to check the claim. To do that, we will:
+    \begin{itemize}
+        \item Calculate the average inflammation per day across all patients.
+        \item Plot the result to discuss and share with colleagues.
+    \end{itemize}
+
+    \bigskip
+
+    This is a typical research workflow: \emph{collect} $\rightarrow$
+    \emph{analyze} $\rightarrow$ \emph{visualize} $\rightarrow$ \emph{conclude}.
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Interpreting the Data}
+    The trial followed \textbf{60 patients} over \textbf{40 days}, stored as
+    comma-separated values (CSV):
+    \begin{itemize}
+        \item Each \textbf{row} is one patient.
+        \item Each \textbf{column} is one day of the trial.
+        \item Each \textbf{value} is the number of inflammation flare-ups
+              that patient had on that day.
+    \end{itemize}
+
+    \begin{lstlisting}[style=demo]
+0,0,1,3,1,2,4,7,8,3,3,3,10,5,7,4,7,...
+0,1,2,1,2,1,3,2,2,6,10,11,5,9,4,4,7,...
+0,1,1,3,3,2,6,2,5,9,5,7,4,5,4,15,5,...
+    \end{lstlisting}
+
+    Row 3, column 7 is \code{6}: patient 3 had 6 flare-ups on day 7.
+    Patients start medication after their first flare-up, so we expect
+    inflammation to rise, then fall as the drug takes effect.
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Live Demonstration}
+    Within JupyterLab, open a new terminal. Type \code{python} and press Enter.
+
+
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Demo Reference}
+    \begin{lstlisting}[style=demo]
+# shell
+python
+
+# Python REPL
+>>> 3 + 5 * 4
+23
+>>> weight_kg = 60
+>>> print(weight_kg)
+60
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Data Types}
+    \begin{itemize}
+        \item \code{int}: Integer values.
+        \item \code{float}: Floating-point values.
+        \item \code{str}: String values.
+        \item And more\ldots
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Using Variables}
+    \begin{lstlisting}[style=demo]
+>>> x = 5
+>>> y = 10
+>>> z = x + y
+>>> print(z)
+15
+>>> first_name = 'Ben'
+>>> last_name = 'Keene'
+>>> full_name = first_name + ' ' + last_name
+>>> print(full_name)
+Ben Keene
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Printing Output}
+    \begin{itemize}
+        \item Use the \code{print()} function to display output.
+        \item You can print strings, numbers, and other data types.
+    \end{itemize}
+    \bigskip
+
+    Either: \code{print(your_variable)} or
+
+    \code{print("Your message:", your_variable)}.
+
+    \bigskip
+
+    Fancy formatting using f-strings:
+
+    \code{print(f"Your message: {your_variable}")}.
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Functions}
+    We've already used the built-in function \code{print()}.
+
+    \bigskip
+
+    \code{type()} returns the type of an object.
+
+    \code{help()} provides help information for a function or module.
+
+    \bigskip
+
+    You can define your own functions using the \code{def} keyword.
+
+    \begin{lstlisting}[style=demo]
+>>> def my_function():
+>>>     print("Hello, World!")
+>>> my_function()
+Hello, World!
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Loading Data}
+    Make sure you are inside the \code{beginner-python} directory in your shell.
+
+    \bigskip
+
+    If you are lost, you can enter \code{cd ~/beginner-python}.
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Loading Data 2}
+    \begin{lstlisting}[style=demo]
+>>> import numpy as np
+>>> np.loadtxt(fname='data/inflammation-01.csv', delimiter=',')
+>>> data = np.loadtxt(fname='data/inflammation-01.csv', delimiter=',')
+>>> print(data)
+...
+>>> print(type(data))
+<class 'numpy.ndarray'>
+...
+>>> print(data.dtype)
+float64
+>>> print(data.shape)
+(60, 40)        # 60 rows 40 columns
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Visualizing the Data}
+    Let's use a Jupyter notebook (ipynb) to visualize the data.
+
+    \bigskip
+
+    From the notebook, we will import Matplotlib and create some plots to investigate the claim that the medicine is effective.
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{A First Plot: The Heat Map}
+    If you started a fresh notebook, reload the data first:
+    \begin{lstlisting}[style=demo]
+import numpy as np
+data = np.loadtxt(fname='data/inflammation-01.csv', delimiter=',')
+    \end{lstlisting}
+
+    Now import Matplotlib and draw a heat map of the whole dataset:
+    \begin{lstlisting}[style=demo]
+import matplotlib.pyplot as plt
+image = plt.imshow(data)
+plt.show()
+    \end{lstlisting}
+
+    Each \textbf{row} is a patient, each \textbf{column} a day.
+    Blue is low, yellow is high.
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Reading the Heat Map}
+    The heat map matches Dr. Maverick's story \emph{so far}:
+    \begin{itemize}
+        \item Patients start medication once flare-ups begin.
+        \item It takes around 3 weeks for the drug to take effect.
+        \item Flare-ups appear to drop to zero by the end of the trial.
+    \end{itemize}
+
+    \bigskip
+
+    But a single picture can hide a lot. Let's look at some summary
+    statistics \emph{across all patients}, one value per day.
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Average Inflammation Over Time}
+    \code{np.mean(data, axis=0)} collapses the 60 rows into a single
+    average for each of the 40 days:
+    \begin{lstlisting}[style=demo]
+ave_inflammation = np.mean(data, axis=0)
+ave_plot = plt.plot(ave_inflammation)
+plt.show()
+    \end{lstlisting}
+
+    A reasonably linear rise and fall --- consistent with the claim that
+    the medication takes about 3 weeks to work.
+
+    \bigskip
+
+    A good data scientist never stops at the average.
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Maximum and Minimum}
+    \begin{lstlisting}[style=demo]
+max_plot = plt.plot(np.max(data, axis=0))
+plt.show()
+
+min_plot = plt.plot(np.min(data, axis=0))
+plt.show()
+    \end{lstlisting}
+
+    \begin{itemize}
+        \item The \textbf{maximum} rises and falls in clean straight lines.
+        \item The \textbf{minimum} looks like a step function.
+    \end{itemize}
+
+    Neither trend is biologically plausible. Either our calculation is
+    wrong, or \emph{something is wrong with the data}.
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Grouping Plots: Subplots}
+    We can place several plots in one figure to compare them at a glance.
+    \begin{lstlisting}[style=demo]
+fig = plt.figure(figsize=(10.0, 3.0))
+axes1 = fig.add_subplot(1, 3, 1)
+axes2 = fig.add_subplot(1, 3, 2)
+axes3 = fig.add_subplot(1, 3, 3)
+
+axes1.set_ylabel('average')
+axes1.plot(np.mean(data, axis=0))
+axes2.set_ylabel('max')
+axes2.plot(np.max(data, axis=0))
+axes3.set_ylabel('min')
+axes3.plot(np.min(data, axis=0))
+
+fig.tight_layout()
+plt.savefig('inflammation.png')
+plt.show()
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Understanding \texttt{add\_subplot}}
+    \code{plt.figure(figsize=(w, h))} creates the canvas.
+
+    \bigskip
+
+    \code{fig.add_subplot(rows, cols, n)} adds one plot:
+    \begin{itemize}
+        \item \textbf{rows}: total rows of subplots
+        \item \textbf{cols}: total columns of subplots
+        \item \textbf{n}: which cell, counting left-to-right, top-to-bottom
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \frametitle{Optional: Lists}
+    Walk through lists, slicing, and other list operations.
+\end{frame}
+
+\begin{frame}
+    \frametitle{Optional: Loops}
+    Walk through \texttt{for} loops and how to use them with lists.
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Analyzing Many Files at Once}
+    Dr. Maverick eventually hands over \textbf{twelve} CSV files, one per
+    clinical trial. We don't want to copy-paste our analysis twelve times.
+
+    \bigskip
+
+    Instead, we'll:
+    \begin{itemize}
+        \item Get a list of every file whose name matches a pattern.
+        \item Write a \code{for} loop to run the same analysis on each one.
+    \end{itemize}
+
+    \bigskip
+
+    This is the payoff of writing reusable code: the work scales from one
+    file to many for free.
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Finding Files with \texttt{glob}}
+    The \code{glob} library finds files whose names match a pattern:
+    \begin{itemize}
+        \item \code{*} matches zero or more characters.
+        \item \code{?} matches any single character.
+    \end{itemize}
+
+    \begin{lstlisting}[style=demo]
+import glob
+print(glob.glob('data/inflammation*.csv'))
+['data/inflammation-05.csv', 'data/inflammation-11.csv',
+ 'data/inflammation-12.csv', 'data/inflammation-08.csv',
+ ...
+ 'data/inflammation-01.csv']
+    \end{lstlisting}
+
+    \code{glob.glob} returns a \textbf{list} in arbitrary order, so we can
+    loop over it.
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Sorting the File List}
+    The order is arbitrary, so we use \code{sorted()} to get a predictable,
+    alphabetical list. We'll start with just the first three files:
+    \begin{lstlisting}[style=demo]
+import glob
+import numpy as np
+import matplotlib.pyplot as plt
+
+filenames = sorted(glob.glob('data/inflammation*.csv'))
+filenames = filenames[0:3]
+    \end{lstlisting}
+
+    \code{sorted()} returns a \emph{new} sorted list; slicing
+    \code{[0:3]} keeps the first three entries.
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{One Loop, Many Files}
+    \begin{lstlisting}[style=demo]
+for filename in filenames:
+    print(filename)
+    data = np.loadtxt(fname=filename, delimiter=',')
+
+    fig = plt.figure(figsize=(10.0, 3.0))
+    axes1 = fig.add_subplot(1, 3, 1)
+    axes2 = fig.add_subplot(1, 3, 2)
+    axes3 = fig.add_subplot(1, 3, 3)
+
+    axes1.set_ylabel('average')
+    axes1.plot(np.mean(data, axis=0))
+    axes2.set_ylabel('max')
+    axes2.plot(np.max(data, axis=0))
+    axes3.set_ylabel('min')
+    axes3.plot(np.min(data, axis=0))
+
+    fig.tight_layout()
+    plt.show()
+    \end{lstlisting}
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{Comparing the Results}
+    The loop produces one figure per file. Looking across them:
+    \begin{itemize}
+        \item Files 1 and 2 look almost identical: the same suspiciously
+              clean maxima and minima we saw before.
+        \item File 3 has much \emph{noisier} average and maximum plots ---
+              actually \emph{less} suspicious.
+        \item But file 3's minimum is stuck at \textbf{zero} for every
+              single day.
+    \end{itemize}
+
+    \bigskip
+
+    A heat map of file 3 shows zeros scattered throughout, and one patient
+    with \emph{no} flare-ups at all --- they may not even have arthritis.
+\end{frame}
+
+\begin{frame}[fragile]
+    \frametitle{The Verdict}
+    Investigating all twelve files, two categories emerge:
+    \begin{itemize}
+        \item ``Ideal'' datasets that match the claim perfectly --- but have
+              impossible, too-clean maxima and minima.
+        \item ``Noisy'' datasets with sporadic missing values and
+              unsuitable participants.
+    \end{itemize}
+
+    \bigskip
+
+    Worse, three of the noisy files (\code{03}, \code{08}, \code{11}) are
+    \textbf{identical down to the last value}.
+
+    \bigskip
+
+    Confronted, Dr. Maverick admits the data was \textbf{fabricated} ---
+    fake datasets, padded out with duplicate copies of a bad one.
+\end{frame}
+
 
 \end{document}
